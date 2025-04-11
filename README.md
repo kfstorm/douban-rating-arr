@@ -4,6 +4,16 @@
 
 ![豆瓣评分 for Radarr & Sonarr 图标](images/icon128.png)
 
+## 效果展示
+
+### Radarr 中的豆瓣评分
+
+![Radarr中的豆瓣评分效果展示](images/screenshot_radarr.jpeg)
+
+### Sonarr 中的豆瓣评分
+
+![Sonarr中的豆瓣评分效果展示](images/screenshot_sonarr.jpeg)
+
 ## 功能特点
 
 - 在 Radarr 和 Sonarr 的电影/剧集海报旁边显示豆瓣评分
