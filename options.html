@@ -33,6 +33,10 @@
       padding: 10px 20px;
       border-radius: 4px;
       cursor: pointer;
+      margin-right: 10px;
+    }
+    button#reset {
+      background-color: #f44336;
     }
     .status {
       margin-top: 15px;
@@ -63,6 +67,10 @@
       color: white;
       font-weight: bold;
     }
+    .button-group {
+      display: flex;
+      margin-top: 20px;
+    }
   </style>
 </head>
 <body>
@@ -70,7 +78,7 @@
 
   <div class="form-group">
     <label for="doubanIdatabaseApiBaseUrl">豆瓣数据库 API 基础网址:</label>
-    <input type="text" id="doubanIdatabaseApiBaseUrl" placeholder="http://localhost:8000">
+    <input type="text" id="doubanIdatabaseApiBaseUrl">
     <small>输入您的豆瓣数据库 API 服务器地址</small>
   </div>
 
@@ -85,14 +93,14 @@
 
     <div class="form-group">
       <label for="goodRatingThreshold">好评阈值:</label>
-      <input type="number" id="goodRatingThreshold" step="0.1" min="0" max="10" placeholder="8.0">
-      <small>高于此值的评分将显示为绿色（默认：8.0）</small>
+      <input type="number" id="goodRatingThreshold" step="0.1" min="0" max="10">
+      <small>高于此值的评分将显示为绿色</small>
     </div>
 
     <div class="form-group">
       <label for="mediumRatingThreshold">中评阈值:</label>
-      <input type="number" id="mediumRatingThreshold" step="0.1" min="0" max="10" placeholder="7.0">
-      <small>高于此值但低于好评阈值的评分将显示为黄色（默认：7.0）</small>
+      <input type="number" id="mediumRatingThreshold" step="0.1" min="0" max="10">
+      <small>高于此值但低于好评阈值的评分将显示为黄色</small>
     </div>
 
     <div class="form-group">
@@ -129,10 +137,14 @@
     </div>
   </div>
 
-  <button id="save">保存</button>
+  <div class="button-group">
+    <button id="save">保存</button>
+    <button id="reset">重置为默认设置</button>
+  </div>
 
   <div id="status" class="status"></div>
 
+  <script src="defaults.js"></script>
   <script src="options.js"></script>
 </body>
 </html>

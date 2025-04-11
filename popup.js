@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', function() {
     'noRatingColor'
   ], function(data) {
     const statusElement = document.createElement('p');
-    statusElement.textContent = `API 网址: ${data.doubanIdatabaseApiBaseUrl || 'http://localhost:8000'}`;
+    statusElement.textContent = `API 网址: ${data.doubanIdatabaseApiBaseUrl || DEFAULT_OPTIONS.doubanIdatabaseApiBaseUrl}`;
 
     const apiKeyStatus = document.createElement('p');
     apiKeyStatus.textContent = `豆瓣数据库 API 密钥: ${data.doubanIdatabaseApiKey ? '已配置' : '未配置'}`;
@@ -29,19 +29,19 @@ document.addEventListener('DOMContentLoaded', function() {
     legendElement.innerHTML = `
       <p><strong>评分颜色说明:</strong></p>
       <div class="legend-item">
-        <span class="color-dot" style="background-color: ${data.goodRatingColor}"></span>
-        <span>好评 (≥ ${data.goodRatingThreshold})</span>
+        <span class="color-dot" style="background-color: ${data.goodRatingColor || DEFAULT_OPTIONS.goodRatingColor}"></span>
+        <span>好评 (≥ ${data.goodRatingThreshold || DEFAULT_OPTIONS.goodRatingThreshold})</span>
       </div>
       <div class="legend-item">
-        <span class="color-dot" style="background-color: ${data.mediumRatingColor}"></span>
-        <span>中评 (≥ ${data.mediumRatingThreshold})</span>
+        <span class="color-dot" style="background-color: ${data.mediumRatingColor || DEFAULT_OPTIONS.mediumRatingColor}"></span>
+        <span>中评 (≥ ${data.mediumRatingThreshold || DEFAULT_OPTIONS.mediumRatingThreshold})</span>
       </div>
       <div class="legend-item">
-        <span class="color-dot" style="background-color: ${data.lowRatingColor}"></span>
-        <span>低评 (< ${data.mediumRatingThreshold})</span>
+        <span class="color-dot" style="background-color: ${data.lowRatingColor || DEFAULT_OPTIONS.lowRatingColor}"></span>
+        <span>低评 (< ${data.mediumRatingThreshold || DEFAULT_OPTIONS.mediumRatingThreshold})</span>
       </div>
       <div class="legend-item">
-        <span class="color-dot" style="background-color: ${data.noRatingColor}"></span>
+        <span class="color-dot" style="background-color: ${data.noRatingColor || DEFAULT_OPTIONS.noRatingColor}"></span>
         <span>暂无评分</span>
       </div>
     `;

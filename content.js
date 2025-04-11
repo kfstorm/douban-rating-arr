@@ -1,18 +1,18 @@
 // Content script that runs on Radarr and Sonarr pages
 
 // Default API URL - this can be overridden in options
-let doubanIdatabaseApiBaseUrl = 'http://localhost:8000';
-let doubanIdatabaseApiKey = '';
+let doubanIdatabaseApiBaseUrl = DEFAULT_OPTIONS.doubanIdatabaseApiBaseUrl;
+let doubanIdatabaseApiKey = DEFAULT_OPTIONS.doubanIdatabaseApiKey;
 let arrApiRoot = '';
 let arrApiKey = '';
 let arrType = ''; // 'radarr' or 'sonarr'
 // Rating threshold settings
-let goodRatingThreshold = 8.0;
-let mediumRatingThreshold = 7.0;
-let goodRatingColor = '#2e963d'; // green
-let mediumRatingColor = '#e09b24'; // yellow
-let lowRatingColor = '#e05924';  // red
-let noRatingColor = '#888888';   // gray
+let goodRatingThreshold = DEFAULT_OPTIONS.goodRatingThreshold;
+let mediumRatingThreshold = DEFAULT_OPTIONS.mediumRatingThreshold;
+let goodRatingColor = DEFAULT_OPTIONS.goodRatingColor;
+let mediumRatingColor = DEFAULT_OPTIONS.mediumRatingColor;
+let lowRatingColor = DEFAULT_OPTIONS.lowRatingColor;
+let noRatingColor = DEFAULT_OPTIONS.noRatingColor;
 // Add a variable to track the last time checkForMediaItems was called
 let lastCheckTime = 0;
 let isScrolling = false;

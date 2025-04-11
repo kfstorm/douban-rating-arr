@@ -2,16 +2,7 @@
 
 // Initialize default settings when extension is installed
 chrome.runtime.onInstalled.addListener(function() {
-  chrome.storage.sync.set({
-    doubanIdatabaseApiBaseUrl: 'http://localhost:8000',
-    doubanIdatabaseApiKey: '',
-    goodRatingThreshold: 8.0,
-    mediumRatingThreshold: 7.0,
-    goodRatingColor: '#2e963d', // green
-    mediumRatingColor: '#e09b24', // yellow
-    lowRatingColor: '#e05924',  // red
-    noRatingColor: '#888888'   // gray
-  }, function() {
+  chrome.storage.sync.set(DEFAULT_OPTIONS, function() {
     console.log('Default settings initialized');
   });
 });
@@ -19,7 +10,7 @@ chrome.runtime.onInstalled.addListener(function() {
 // Listen for messages from content script
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
   if (request.action === 'fetchDoubanRating') {
-    const doubanIdatabaseApiBaseUrl = request.doubanIdatabaseApiBaseUrl || 'http://localhost:8000';
+    const doubanIdatabaseApiBaseUrl = request.doubanIdatabaseApiBaseUrl || DEFAULT_OPTIONS.doubanIdatabaseApiBaseUrl;
     const doubanIdatabaseApiKey = request.doubanIdatabaseApiKey || '';
     const imdbId = request.imdbId;
 

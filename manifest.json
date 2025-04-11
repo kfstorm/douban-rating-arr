@@ -12,7 +12,7 @@
   "permissions": ["storage", "activeTab"],
   "host_permissions": ["<all_urls>"],
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "service-worker.js"
   },
   "action": {
     "default_popup": "popup.html",
@@ -26,13 +26,13 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["content.js"],
+      "js": ["defaults.js", "content.js"],
       "css": ["styles.css"]
     }
   ],
   "web_accessible_resources": [
     {
-      "resources": ["api-access.js"],
+      "resources": ["api-access.js", "defaults.js"],
       "matches": ["<all_urls>"]
     }
   ],
