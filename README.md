@@ -40,8 +40,8 @@
   ```json
   [
     {
-      "douban_id": "豆瓣条目ID",
-      "rating": 豆瓣评分(数字)
+      "douban_id": "1292052",
+      "rating": 9.7
     }
   ]
   ```
