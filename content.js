@@ -28,6 +28,111 @@ const MEDIA_CACHE_TTL = 5 * 60 * 1000; // 5 minutes cache validity
 let isRadarrPage = false;
 let isSonarrPage = false;
 
+// Platform configuration for different *Arr sites
+const arrPlatformConfig = {
+  radarr: {
+    // Finding container elements
+    containerSelector: 'div[class^="MovieIndexPoster-content"]',
+
+    // Finding poster element within container
+    getPosterElement: (container) => container,
+
+    // Extracting media ID from container
+    getMediaId: (container) => {
+      const link = container.querySelector('a[class^="MovieIndexPoster-link"]');
+      if (!link || !link.href) return null;
+
+      const parts = link.href.split("/");
+      return parts[parts.length - 1];
+    },
+
+    // Finding media item from API data
+    findMediaItem: (mediaCache, mediaId) => {
+      return mediaCache.find(m => m.tmdbId == mediaId);
+    }
+  },
+
+  sonarr: {
+    containerSelector: 'div[class^="SeriesIndexPoster-content"]',
+
+    getPosterElement: (container) => container,
+
+    getMediaId: (container) => {
+      const link = container.querySelector('a[class^="SeriesIndexPoster-link"]');
+      if (!link || !link.href) return null;
+
+      const parts = link.href.split("/");
+      return parts[parts.length - 1];
+    },
+
+    findMediaItem: (mediaCache, mediaId) => {
+      return mediaCache.find(m => m.titleSlug === mediaId);
+    }
+  },
+
+  // Add support for Sonarr's Add New Series page
+  sonarrAddNew: {
+    containerSelector: 'div[class^="AddNewSeriesSearchResult-searchResult"]',
+
+    // Find the poster element within the search result
+    // and wrap it in a container if it's an img
+    getPosterElement: (container) => {
+      const posterImg = container.querySelector('img[class^="AddNewSeriesSearchResult-poster"]');
+      if (!posterImg) return null;
+
+      // Check if the img is already wrapped
+      let posterContainer = posterImg.parentElement;
+      if (!posterContainer.classList.contains('douban-poster-container')) {
+        // Create a container for the img
+        posterContainer = document.createElement('div');
+        posterContainer.className = 'douban-poster-container';
+        posterContainer.style.position = 'relative';
+        posterContainer.style.display = 'inline-block';
+
+        // Insert the container at the img position and move the img inside
+        posterImg.parentElement.insertBefore(posterContainer, posterImg);
+        posterContainer.appendChild(posterImg);
+      }
+
+      return posterContainer;
+    },
+
+    // Extract TVDB ID from ThetvDB link
+    getMediaId: (container) => {
+      const tvdbLink = Array.from(container.querySelectorAll('a')).find(
+        link => link.href && link.href.startsWith('https://www.thetvdb.com/')
+      );
+
+      if (!tvdbLink) return null;
+
+      // Extract the ID from URL format like "https://www.thetvdb.com/?tab=series&id=253463"
+      const match = tvdbLink.href.match(/[?&]id=(\d+)/);
+      return match ? match[1] : null;
+    },
+
+    // Find the media item using TVDB ID
+    findMediaItem: (mediaCache, mediaId) => {
+      return mediaCache.find(m => m.tvdbId == mediaId);
+    }
+  }
+  // Additional platforms can be added here
+};
+
+// Helper function to get current platform configuration
+function getCurrentPlatformConfig() {
+  if (isRadarrPage) return arrPlatformConfig.radarr;
+
+  if (isSonarrPage) {
+    // Check if we're on the Add New Series page
+    if (window.location.pathname.includes('/add/new')) {
+      return arrPlatformConfig.sonarrAddNew;
+    }
+    return arrPlatformConfig.sonarr;
+  }
+
+  return null;
+}
+
 // Function to check if we're on a Radarr or Sonarr page
 function checkIfArrPage() {
   // Check for meta tag in head
@@ -209,12 +314,10 @@ function handleScroll() {
 
 // Function to get all media elements based on the current page type
 function getMediaElements() {
-  if (isRadarrPage) {
-    return [...document.querySelectorAll('div[class^="MovieIndexPoster-content"]')];
-  } else if (isSonarrPage) {
-    return [...document.querySelectorAll('div[class^="SeriesIndexPoster-content"]')];
-  }
-  return [];
+  const config = getCurrentPlatformConfig();
+  if (!config) return [];
+
+  return [...document.querySelectorAll(config.containerSelector)];
 }
 
 // Function to set up intersection observer
@@ -331,22 +434,18 @@ function processMediaElement(mediaElement) {
     return;
   }
 
-  // Extract ID from the element
-  let link;
+  // Get the platform-specific configuration
+  const config = getCurrentPlatformConfig();
+  if (!config) return;
 
-  if (isRadarrPage) {
-    link = mediaElement.querySelector('a[class^="MovieIndexPoster-link"]');
-  } else if (isSonarrPage) {
-    link = mediaElement.querySelector('a[class^="SeriesIndexPoster-link"]');
-  } else {
-    return;
-  }
+  // Step 1: Find the container element (already done - mediaElement is the container)
 
-  if (!link || !link.href) return;
+  // Step 2: Find the poster element in the container
+  const posterElement = config.getPosterElement(mediaElement);
+  if (!posterElement) return;
 
-  const parts = link.href.split("/");
-  const mediaId = parts[parts.length - 1];
-
+  // Step 3: Find the media ID of the container element
+  const mediaId = config.getMediaId(mediaElement);
   if (!mediaId) return;
 
   // Check if this element has already been processed for this specific media
@@ -365,18 +464,10 @@ function processMediaElement(mediaElement) {
     }
   }
 
-  // Find matching media in our cache
-  const mediaItem = mediaCache.find(m => {
-    if (isRadarrPage) {
-      return m.tmdbId == mediaId;
-    } else if (isSonarrPage) {
-      // For Sonarr, match by titleSlug
-      return m.titleSlug === mediaId;
-    }
-    return false;
-  });
+  // Find matching media in our cache using the configuration
+  const mediaItem = config.findMediaItem(mediaCache, mediaId);
 
-  // Only proceed if we have an IMDb ID
+  // Only proceed if we have a media item
   if (mediaItem) {
     // Store the current media ID to detect changes
     mediaElement.setAttribute('data-douban-media-id', mediaId);
@@ -385,19 +476,22 @@ function processMediaElement(mediaElement) {
     if (ratingCache[mediaId] !== undefined) {
       // Use cached rating and url
       const { rating, url } = ratingCache[mediaId];
-      displayDoubanRating(rating, url, mediaElement);
+      displayDoubanRating(rating, url, posterElement);
     } else {
       if (mediaItem.imdbId) {
         // Fetch rating and then display it
         fetchDoubanRating(mediaItem.imdbId, mediaId)
           .then(({ rating, url }) => {
-            displayDoubanRating(rating, url, mediaElement);
+            displayDoubanRating(rating, url, posterElement);
           });
       } else {
         // If no IMDb ID, display a placeholder
-        displayDoubanRating(null, null, mediaElement);
+        displayDoubanRating(null, null, posterElement);
       }
     }
+  } else {
+    // If no media item found, display a placeholder
+    displayDoubanRating(null, null, posterElement);
   }
 }
 
