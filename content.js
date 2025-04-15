@@ -43,12 +43,15 @@ const arrPlatformConfig = {
       if (!link || !link.href) return null;
 
       const parts = link.href.split("/");
-      return parts[parts.length - 1];
+      return {
+        id: parts[parts.length - 1],
+        type: 'tmdb'
+      };
     },
 
     // Finding media item from API data
     findMediaItem: (mediaCache, mediaId) => {
-      return mediaCache.find(m => m.tmdbId == mediaId);
+      return mediaCache.find(m => m.tmdbId == mediaId.id);
     }
   },
 
@@ -62,11 +65,14 @@ const arrPlatformConfig = {
       if (!link || !link.href) return null;
 
       const parts = link.href.split("/");
-      return parts[parts.length - 1];
+      return {
+        id: parts[parts.length - 1],
+        type: 'titleSlug'
+      };
     },
 
     findMediaItem: (mediaCache, mediaId) => {
-      return mediaCache.find(m => m.titleSlug === mediaId);
+      return mediaCache.find(m => m.titleSlug === mediaId.id);
     }
   },
 
@@ -107,12 +113,15 @@ const arrPlatformConfig = {
 
       // Extract the ID from URL format like "https://www.thetvdb.com/?tab=series&id=253463"
       const match = tvdbLink.href.match(/[?&]id=(\d+)/);
-      return match ? match[1] : null;
+      return match ? {
+        id: match[1],
+        type: 'tvdb'
+      } : null;
     },
 
     // Find the media item using TVDB ID
     findMediaItem: (mediaCache, mediaId) => {
-      return mediaCache.find(m => m.tvdbId == mediaId);
+      return mediaCache.find(m => m.tvdbId == mediaId.id);
     }
   }
   // Additional platforms can be added here
@@ -452,12 +461,12 @@ function processMediaElement(mediaElement) {
   const currentMediaId = mediaElement.getAttribute('data-douban-media-id');
 
   // If the element has been processed for this specific media, no need to process again
-  if (currentMediaId === mediaId) {
+  if (currentMediaId === mediaId.id) {
     return;
   }
 
   // If the element has a rating display but for a different media, remove it
-  if (currentMediaId && currentMediaId !== mediaId) {
+  if (currentMediaId && currentMediaId !== mediaId.id) {
     const existingRating = mediaElement.querySelector('.douban-rating');
     if (existingRating) {
       existingRating.remove();
@@ -467,40 +476,74 @@ function processMediaElement(mediaElement) {
   // Find matching media in our cache using the configuration
   const mediaItem = config.findMediaItem(mediaCache, mediaId);
 
-  // Only proceed if we have a media item
-  if (mediaItem) {
-    // Store the current media ID to detect changes
-    mediaElement.setAttribute('data-douban-media-id', mediaId);
+  // Store the current media ID to detect changes
+  mediaElement.setAttribute('data-douban-media-id', mediaId.id);
 
-    // Check if rating is already in cache
-    if (ratingCache[mediaId] !== undefined) {
-      // Use cached rating and url
-      const { rating, url } = ratingCache[mediaId];
+  // Check if rating is already in cache
+  if (ratingCache[mediaId.id] !== undefined) {
+    // Use cached rating and url
+    const { rating, url } = ratingCache[mediaId.id];
+    displayDoubanRating(rating, url, posterElement);
+  } else if (mediaItem) {
+    // If we have the media item, use it to fetch the rating
+    fetchDoubanRating(mediaItem, mediaId.id).then(({ rating, url }) => {
       displayDoubanRating(rating, url, posterElement);
-    } else {
-      if (mediaItem.imdbId) {
-        // Fetch rating and then display it
-        fetchDoubanRating(mediaItem.imdbId, mediaId)
-          .then(({ rating, url }) => {
-            displayDoubanRating(rating, url, posterElement);
-          });
-      } else {
-        // If no IMDb ID, display a placeholder
-        displayDoubanRating(null, null, posterElement);
-      }
-    }
+    });
   } else {
-    // If no media item found, display a placeholder
-    displayDoubanRating(null, null, posterElement);
+    // If no media item found but we know the ID type, we can try to fetch rating with it
+    const pseudoMediaItem = {};
+
+    // Use the mediaId type to decide which ID to use
+    switch (mediaId.type) {
+      case 'tmdb':
+        pseudoMediaItem.tmdbId = mediaId.id;
+        break;
+      case 'tvdb':
+        pseudoMediaItem.tvdbId = mediaId.id;
+        break;
+      case 'imdb':
+        pseudoMediaItem.imdbId = mediaId.id;
+        break;
+      // For titleSlug or other types, we don't have a direct match to ID types
+      default:
+        // No direct mapping to ID types we can use, display placeholder
+        displayDoubanRating(null, null, posterElement);
+        return;
+    }
+
+    // Fetch the rating using the pseudo media item
+    fetchDoubanRating(pseudoMediaItem, mediaId.id).then(({ rating, url }) => {
+      displayDoubanRating(rating, url, posterElement);
+    });
   }
 }
 
 // Function to fetch Douban rating using the API
-function fetchDoubanRating(imdbId, mediaId) {
-  let url = `${doubanIdatabaseApiBaseUrl}/api/item?imdb_id=${imdbId}`;
+function fetchDoubanRating(mediaItem, mediaId) {
+  // Build query parameters based on available IDs
+  let params = new URLSearchParams();
+
   if (doubanIdatabaseApiKey) {
-    url += `&api_key=${doubanIdatabaseApiKey}`;
+    params.append('api_key', doubanIdatabaseApiKey);
   }
+
+  if (mediaItem.imdbId) {
+    params.append('imdb_id', mediaItem.imdbId);
+  } else if (mediaItem.tmdbId) {
+    params.append('tmdb_id', mediaItem.tmdbId);
+    if (isRadarrPage) {
+      params.append('tmdb_media_type', 'movie');
+    } else if (isSonarrPage) {
+      params.append('tmdb_media_type', 'tv');
+    }
+  } else if (mediaItem.tvdbId) {
+    params.append('tvdb_id', mediaItem.tvdbId);
+  } else {
+    // No valid ID found, return empty result
+    return Promise.resolve({ rating: null, url: null });
+  }
+
+  const url = `${doubanIdatabaseApiBaseUrl}/api/item?${params.toString()}`;
 
   return fetch(url)
     .then(response => {

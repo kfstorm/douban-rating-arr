@@ -84,8 +84,8 @@
    - 从 Radarr 或 Sonarr API 获取电影或剧集的详细信息，特别是 IMDb ID
 
 2. **映射过程**：
-   - 使用 IMDb ID 作为主要标识符，向豆瓣数据库 API 发送查询请求
-   - 豆瓣数据库 API 负责将 IMDb ID 映射到对应的豆瓣条目 ID
+   - 使用 IMDb/TMDB/TVDB ID 作为主要标识符，向豆瓣数据库 API 发送查询请求
+   - 豆瓣数据库 API 负责将 IMDb/TMDB/TVDB ID 映射到对应的豆瓣条目 ID
 
 3. **数据缓存**：
    - 扩展会缓存已查询的评分结果，减少重复请求
@@ -97,7 +97,11 @@
 
 豆瓣数据库 API 需要提供以下功能：
 
-- 接受 IMDb ID 作为输入参数 (例如: `/api/item?imdb_id=tt0111161`)
+- 支持多种 ID 类型作为输入参数：
+  - IMDb ID：`/api/item?imdb_id=tt0111161`
+  - TMDB ID 与媒体类型：`/api/item?tmdb_id=278&tmdb_media_type=movie`
+  - TVDB ID：`/api/item?tvdb_id=81189`
+
 - 返回包含以下信息的 JSON 格式数据：
 
   ```json
