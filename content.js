@@ -52,7 +52,10 @@ const arrPlatformConfig = {
     // Finding media item from API data
     findMediaItem: (mediaCache, mediaId) => {
       return mediaCache.find(m => m.tmdbId == mediaId.id);
-    }
+    },
+
+    // Custom styling for rating display
+    ratingStyle: {}
   },
 
   sonarr: {
@@ -73,7 +76,10 @@ const arrPlatformConfig = {
 
     findMediaItem: (mediaCache, mediaId) => {
       return mediaCache.find(m => m.titleSlug === mediaId.id);
-    }
+    },
+
+    // Custom styling for rating display
+    ratingStyle: {}
   },
 
   // Add support for Sonarr's Add New Series page
@@ -122,6 +128,11 @@ const arrPlatformConfig = {
     // Find the media item using TVDB ID
     findMediaItem: (mediaCache, mediaId) => {
       return mediaCache.find(m => m.tvdbId == mediaId.id);
+    },
+
+    // Custom styling for rating display
+    ratingStyle: {
+      marginRight: '20px'
     }
   },
 
@@ -147,6 +158,11 @@ const arrPlatformConfig = {
     // Find the media item using TMDB ID
     findMediaItem: (mediaCache, mediaId) => {
       return mediaCache.find(m => m.tmdbId == mediaId.id);
+    },
+
+    // Custom styling for rating display
+    ratingStyle: {
+      marginRight: '20px'
     }
   }
   // Additional platforms can be added here
@@ -776,6 +792,12 @@ function displayDoubanRating(ratingValue, url, mediaElement) {
     ratingElement.href = url;
     ratingElement.target = '_blank'; // Open in new tab
     ratingElement.title = '点击查看豆瓣详情';
+  }
+
+  // Apply platform-specific styles
+  const platformConfig = getCurrentPlatformConfig();
+  if (platformConfig && platformConfig.ratingStyle) {
+    Object.assign(ratingElement.style, platformConfig.ratingStyle);
   }
 
   // Ensure parent element has position relative for absolute positioning to work
