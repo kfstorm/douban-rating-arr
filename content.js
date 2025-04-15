@@ -267,6 +267,17 @@ chrome.storage.sync.get([
   }
 });
 
+// Helper function to check if an element is in the viewport
+function isElementInViewport(element) {
+  const rect = element.getBoundingClientRect();
+  return (
+    rect.top >= 0 &&
+    rect.left >= 0 &&
+    rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+    rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+  );
+}
+
 // Main function to process the page
 function processArrPage() {
   // Only check if we're on a Radarr/Sonarr page once
@@ -322,11 +333,18 @@ function handleScroll() {
 }
 
 // Function to get all media elements based on the current page type
-function getMediaElements() {
+function getMediaElements(viewportOnly = false) {
   const config = getCurrentPlatformConfig();
   if (!config) return [];
 
-  return [...document.querySelectorAll(config.containerSelector)];
+  const elements = [...document.querySelectorAll(config.containerSelector)];
+
+  // If viewportOnly is true, filter for elements in viewport
+  if (viewportOnly) {
+    return elements.filter(isElementInViewport);
+  }
+
+  return elements;
 }
 
 // Function to set up intersection observer
@@ -353,7 +371,10 @@ function setupIntersectionObserver() {
   function observeMediaElements() {
     const mediaElements = getMediaElements();
     mediaElements.forEach(element => {
-      observer.observe(element);
+      // Only observe if it hasn't been processed yet
+      if (!element.getAttribute('data-douban-media-id')) {
+        observer.observe(element);
+      }
     });
   }
 
@@ -366,10 +387,13 @@ function setupIntersectionObserver() {
 
 // Function to process elements that weren't processed during scrolling
 function processUnprocessedElements() {
-  const mediaElements = getMediaElements();
+  // Only get elements that are currently in the viewport
+  const visibleMediaElements = getMediaElements(true);
 
-  if (mediaElements.length > 0) {
-    checkForMediaItems(true); // Force processing
+  if (visibleMediaElements.length > 0) {
+    visibleMediaElements.forEach(element => {
+      processMediaElement(element);
+    });
   }
 }
 
@@ -430,9 +454,10 @@ function fetchMediaFromAPI() {
 
 // Process media from API and match with DOM elements
 function processMediaFromAPI(media) {
-  const mediaElements = getMediaElements();
+  // Only process media elements that are currently visible
+  const visibleMediaElements = getMediaElements(true);
 
-  mediaElements.forEach(element => {
+  visibleMediaElements.forEach(element => {
     processMediaElement(element);
   });
 }
