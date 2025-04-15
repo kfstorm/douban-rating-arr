@@ -123,13 +123,44 @@ const arrPlatformConfig = {
     findMediaItem: (mediaCache, mediaId) => {
       return mediaCache.find(m => m.tvdbId == mediaId.id);
     }
+  },
+
+  // Add support for Radarr's Add New Movie page
+  radarrAddNew: {
+    containerSelector: 'div[class^="AddNewMovieSearchResult-searchResult"]',
+
+    // Find the poster element within the search result
+    getPosterElement: (container) => {
+      const posterContainer = container.querySelector('div[class^="AddNewMovieSearchResult-posterContainer"]');
+      return posterContainer || null;
+    },
+
+    // Extract TMDB ID from React props
+    getMediaId: (container) => {
+      const reactProps = container.reactProps;
+      if (!reactProps) return null;
+
+      const tmdbId = reactProps.tmdbId;
+      return tmdbId ? { id: tmdbId, type: 'tmdb' } : null;
+    },
+
+    // Find the media item using TMDB ID
+    findMediaItem: (mediaCache, mediaId) => {
+      return mediaCache.find(m => m.tmdbId == mediaId.id);
+    }
   }
   // Additional platforms can be added here
 };
 
 // Helper function to get current platform configuration
 function getCurrentPlatformConfig() {
-  if (isRadarrPage) return arrPlatformConfig.radarr;
+  if (isRadarrPage) {
+    // Check if we're on the Add New Movie page
+    if (window.location.pathname.includes('/add/new')) {
+      return arrPlatformConfig.radarrAddNew;
+    }
+    return arrPlatformConfig.radarr;
+  }
 
   if (isSonarrPage) {
     // Check if we're on the Add New Series page
@@ -183,6 +214,7 @@ window.addEventListener('message', function(event) {
   // Make sure the message is from our page
   if (event.source !== window) return;
 
+  // Listen for different message types
   if (event.data.type === 'ARR_API_DATA') {
     const apiInfo = event.data.payload;
     if (apiInfo.apiRoot && apiInfo.apiKey) {
@@ -196,6 +228,47 @@ window.addEventListener('message', function(event) {
     } else if (isRadarrPage || isSonarrPage) {
       // Only log the warning if we believe this is a relevant page
       console.warn('API details not found in page context');
+    }
+  } else if (event.data.type === 'REACT_PROPS_SCRIPT_READY') {
+    // Mark the script as ready to receive requests
+    window.reactPropsScriptReady = true;
+    console.log('React props script is ready to receive requests');
+  } else if (event.data.type === 'REACT_PROPS_RESPONSE') {
+    // Handle response for a specific request
+    const requestId = event.data.requestId;
+    const propsData = event.data.payload;
+    const success = event.data.success;
+
+    if (success && propsData) {
+      try {
+        // Extract the original element ID from the requestId
+        // The original format should be 'request-uniqueId'
+        const uniqueId = requestId.replace('request-', '');
+        const element = document.getElementById(uniqueId);
+
+        if (element) {
+          // Parse the JSON string back to an object
+          const props = JSON.parse(propsData);
+
+          // Store the props on the element for future use
+          element.reactProps = props;
+
+          // Dispatch a custom event to notify our code that props are available
+          const propsEvent = new CustomEvent('react-props-loaded', {
+            detail: { element, props }
+          });
+          document.dispatchEvent(propsEvent);
+
+          // Process the element now that we have its props
+          processMediaElement(element);
+        } else {
+          console.warn(`Element with ID '${uniqueId}' not found for request ${requestId}`);
+        }
+      } catch (e) {
+        console.error('Error handling React props response:', e);
+      }
+    } else if (!success) {
+      console.warn('Failed to get React props:', event.data.error);
     }
   }
 });
@@ -472,6 +545,12 @@ function processMediaElement(mediaElement) {
   const config = getCurrentPlatformConfig();
   if (!config) return;
 
+  // First check if element already has reactProps
+  if (!mediaElement.reactProps) {
+    // If not, try to get them
+    asyncFetchAndFillReactProps(mediaElement, ".children[2].props");
+  }
+
   // Step 1: Find the container element (already done - mediaElement is the container)
 
   // Step 2: Find the poster element in the container
@@ -541,6 +620,81 @@ function processMediaElement(mediaElement) {
       displayDoubanRating(rating, url, posterElement);
     });
   }
+}
+
+// Function to extract React props from a DOM element
+function asyncFetchAndFillReactProps(element, propPath) {
+  if (!element) return null;
+
+  // Create a unique ID for both the element and the request
+  const uniqueId = element.id || ('react-props-' + Math.random().toString(36).substr(2, 9));
+
+  if (!element.id) {
+    // If no ID exists, add one temporarily
+    element.id = uniqueId;
+  }
+
+  // Use the ID as the selector
+  const selector = '#' + uniqueId;
+
+  // Check if the script is already injected
+  if (!window.reactPropsScriptInjected) {
+    // Flag to track if the script is loaded
+    window.reactPropsScriptInjected = true;
+    window.reactPropsScriptReady = false;
+
+    // Create a script element that points to our external script
+    const script = document.createElement('script');
+    script.src = chrome.runtime.getURL('react-props-access.js');
+
+    // Append the script to the document
+    document.head.appendChild(script);
+
+    // Clean up after the script has loaded
+    script.onload = function() {
+      console.log('React props script loaded');
+    };
+  }
+
+  // Function to send the request for React props
+  function sendReactPropsRequest() {
+    // Use the same uniqueId for the requestId to ensure they match
+    const requestId = 'request-' + uniqueId;
+
+    // Send a message to the page context
+    window.postMessage({
+      type: 'GET_REACT_PROPS',
+      selector: selector,
+      requestId: requestId,
+      propPath: propPath
+    }, '*');
+
+    return requestId;
+  }
+
+  // If the script is ready, send the request immediately
+  if (window.reactPropsScriptReady) {
+    sendReactPropsRequest();
+  } else {
+    // Otherwise, wait for the script to be ready
+    const checkInterval = setInterval(() => {
+      if (window.reactPropsScriptReady) {
+        clearInterval(checkInterval);
+        sendReactPropsRequest();
+      }
+    }, 50);
+
+    // Set a timeout to clear the interval if it takes too long
+    setTimeout(() => {
+      if (!window.reactPropsScriptReady) {
+        clearInterval(checkInterval);
+        console.warn('React props script did not load in time');
+      }
+    }, 2000);
+  }
+
+  // Return null for now, as the actual props will be received via message event
+  return null;
 }
 
 // Function to fetch Douban rating using the API

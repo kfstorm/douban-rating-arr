@@ -32,7 +32,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["api-access.js", "defaults.js"],
+      "resources": ["api-access.js", "defaults.js", "react-props-access.js"],
       "matches": ["<all_urls>"]
     }
   ],
