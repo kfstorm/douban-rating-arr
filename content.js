@@ -30,7 +30,7 @@ let isSonarrPage = false;
 
 // Platform configuration for different *Arr sites
 const arrPlatformConfig = {
-  radarr: {
+  radarrHome: {
     // Finding container elements
     containerSelector: 'div[class^="MovieIndexPoster-content"]',
 
@@ -55,10 +55,14 @@ const arrPlatformConfig = {
     },
 
     // Custom styling for rating display
-    ratingStyle: {}
+    ratingStyle: {},
+
+    // React props configuration
+    fetchReactProps: false,
+    reactPropsPath: null
   },
 
-  sonarr: {
+  sonarrHome: {
     containerSelector: 'div[class^="SeriesIndexPoster-content"]',
 
     getPosterElement: (container) => container,
@@ -79,7 +83,11 @@ const arrPlatformConfig = {
     },
 
     // Custom styling for rating display
-    ratingStyle: {}
+    ratingStyle: {},
+
+    // React props configuration
+    fetchReactProps: false,
+    reactPropsPath: null
   },
 
   // Add support for Sonarr's Add New Series page
@@ -133,7 +141,11 @@ const arrPlatformConfig = {
     // Custom styling for rating display
     ratingStyle: {
       marginRight: '20px'
-    }
+    },
+
+    // React props configuration
+    fetchReactProps: true,
+    reactPropsPath: ".children[2].props"
   },
 
   // Add support for Radarr's Add New Movie page
@@ -163,7 +175,11 @@ const arrPlatformConfig = {
     // Custom styling for rating display
     ratingStyle: {
       marginRight: '20px'
-    }
+    },
+
+    // React props configuration
+    fetchReactProps: true,
+    reactPropsPath: ".children[2].props"
   }
   // Additional platforms can be added here
 };
@@ -175,7 +191,7 @@ function getCurrentPlatformConfig() {
     if (window.location.pathname.includes('/add/new')) {
       return arrPlatformConfig.radarrAddNew;
     }
-    return arrPlatformConfig.radarr;
+    return arrPlatformConfig.radarrHome;
   }
 
   if (isSonarrPage) {
@@ -183,7 +199,7 @@ function getCurrentPlatformConfig() {
     if (window.location.pathname.includes('/add/new')) {
       return arrPlatformConfig.sonarrAddNew;
     }
-    return arrPlatformConfig.sonarr;
+    return arrPlatformConfig.sonarrHome;
   }
 
   return null;
@@ -561,10 +577,10 @@ function processMediaElement(mediaElement) {
   const config = getCurrentPlatformConfig();
   if (!config) return;
 
-  // First check if element already has reactProps
-  if (!mediaElement.reactProps) {
-    // If not, try to get them
-    asyncFetchAndFillReactProps(mediaElement, ".children[2].props");
+  // Only fetch React props if enabled for the current platform
+  if (config.fetchReactProps && !mediaElement.reactProps) {
+    // If not, try to get them with the configured path
+    asyncFetchAndFillReactProps(mediaElement, config.reactPropsPath);
   }
 
   // Step 1: Find the container element (already done - mediaElement is the container)
