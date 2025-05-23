@@ -180,24 +180,84 @@ const arrPlatformConfig = {
     // React props configuration
     fetchReactProps: true,
     reactPropsPath: ".children[2].props"
+  },
+
+  // Configuration for Radarr Movie Detail page
+  radarrMovieDetail: {
+    containerSelector: 'div[class^="MovieDetails-headerContent-"]', // Main info block for the movie
+    getPosterElement: (container) => {
+      // Find the poster image element
+      return container.querySelector('img[class^="MovieDetails-poster-"]');
+    },
+    getMediaId: (container) => {
+      const match = window.location.pathname.match(/^\/radarr\/movie\/(\d+)$/);
+      if (match && match[1]) {
+        // The Radarr API /movie endpoint returns items with an 'id' field which is this movie ID.
+        return { id: match[1], type: 'tmdbId' };
+      }
+      return null;
+    },
+    findMediaItem: (mediaCache, mediaId) => {
+      return mediaCache.find(m => m.tmdbId == mediaId.id);
+    },
+    // Custom styling for rating display
+    ratingStyle: {
+      marginRight: '35px'
+    },
+    fetchReactProps: false, // TMDB ID will be fetched via Radarr's API using radarrId
+    reactPropsPath: null
+  },
+
+  // Configuration for Sonarr Series Detail page
+  sonarrSeriesDetail: {
+    containerSelector: 'div[class^="SeriesDetails-headerContent-"]', // Main info block for the series
+    getPosterElement: (container) => {
+      // Find the poster image element
+      const targetDiv = container.querySelector('img[class^="SeriesDetails-poster-"]');
+      return targetDiv;
+    },
+    getMediaId: (container) => {
+      // The Sonarr API /series endpoint returns items with a 'titleSlug' field which is this series slug.
+      const match = window.location.pathname.match(/^\/sonarr\/series\/([a-zA-Z0-9-]+)$/);
+      if (match && match[1]) {
+        return { id: match[1], type: 'titleSlug' };
+      }
+      return null;
+    },
+    findMediaItem: (mediaCache, mediaId) => {
+      return mediaCache.find(m => m.titleSlug === mediaId.id);
+    },
+    // Custom styling for rating display
+    ratingStyle: {
+      marginRight: '35px'
+    },
+    fetchReactProps: false, // TVDB ID will be fetched via Sonarr's API using titleSlug
+    reactPropsPath: null
   }
   // Additional platforms can be added here
 };
 
 // Helper function to get current platform configuration
 function getCurrentPlatformConfig() {
+  const pathname = window.location.pathname;
   if (isRadarrPage) {
     // Check if we're on the Add New Movie page
-    if (window.location.pathname.includes('/add/new')) {
+    if (pathname.includes('/add/new')) {
       return arrPlatformConfig.radarrAddNew;
+    }
+    if (pathname.includes('/movie/')) {
+      return arrPlatformConfig.radarrMovieDetail;
     }
     return arrPlatformConfig.radarrHome;
   }
 
   if (isSonarrPage) {
     // Check if we're on the Add New Series page
-    if (window.location.pathname.includes('/add/new')) {
+    if (pathname.includes('/add/new')) {
       return arrPlatformConfig.sonarrAddNew;
+    }
+    if (pathname.includes('/series/')) {
+      return arrPlatformConfig.sonarrSeriesDetail;
     }
     return arrPlatformConfig.sonarrHome;
   }
@@ -603,7 +663,8 @@ function processMediaElement(mediaElement) {
 
   // If the element has a rating display but for a different media, remove it
   if (currentMediaId && currentMediaId !== mediaId.id) {
-    const existingRating = mediaElement.querySelector('.douban-rating');
+    const existingRatingElement = mediaElement.closest('.douban-poster-container') || mediaElement;
+    const existingRating = existingRatingElement.querySelector('.douban-rating');
     if (existingRating) {
       existingRating.remove();
     }
@@ -793,38 +854,64 @@ function fetchDoubanRating(mediaItem, mediaId) {
 
 // Function to display the Douban rating in the UI
 function displayDoubanRating(ratingValue, url, mediaElement) {
-  // Remove any existing rating element first
-  const existingRating = mediaElement.querySelector('.douban-rating');
+  let ratingAppendTarget = mediaElement; // This is the element to which the rating will be appended.
+
+  // If the mediaElement is an IMG, we need to ensure it's wrapped for correct positioning of the rating.
+  if (mediaElement.tagName === 'IMG') {
+    let wrapper = mediaElement.parentElement;
+    // Check if it's already wrapped by our standard container class.
+    if (wrapper && wrapper.classList.contains('douban-poster-container')) {
+      ratingAppendTarget = wrapper;
+    } else {
+      // Create a new wrapper with the standard class.
+      const newWrapper = document.createElement('div');
+      newWrapper.className = 'douban-poster-container'; // Consistent class name
+      newWrapper.style.position = 'relative';
+      newWrapper.style.display = 'inline-block'; // Ensures wrapper fits image size.
+
+      // Insert the wrapper in place of the image and move the image into the wrapper.
+      if (mediaElement.parentNode) {
+        mediaElement.parentNode.insertBefore(newWrapper, mediaElement);
+      }
+      newWrapper.appendChild(mediaElement);
+      ratingAppendTarget = newWrapper;
+    }
+  } else {
+    // For non-IMG elements (typically DIVs that are already containers),
+    // ensure they can serve as a positioning context for an absolute-positioned rating.
+    if (getComputedStyle(mediaElement).position === 'static') {
+      mediaElement.style.position = 'relative';
+    }
+    // ratingAppendTarget is already mediaElement
+  }
+
+  // Remove any existing rating element from the ratingAppendTarget.
+  // This ensures that if the rating is updated, the old one is cleared.
+  const existingRating = ratingAppendTarget.querySelector('.douban-rating');
   if (existingRating) {
     existingRating.remove();
   }
 
-  // Create base element - use an anchor if we have a URL, otherwise a div
+  // Create the base rating element (anchor if URL exists, otherwise div).
   const ratingElement = document.createElement(url ? 'a' : 'div');
-  ratingElement.className = 'douban-rating';
+  ratingElement.className = 'douban-rating'; // This class should handle absolute positioning via CSS.
 
-  // If we have a URL, set anchor-specific properties
+  // Set link properties if a Douban URL is available.
   if (url) {
     ratingElement.href = url;
-    ratingElement.target = '_blank'; // Open in new tab
-    ratingElement.title = '点击查看豆瓣详情';
+    ratingElement.target = '_blank'; // Open link in a new tab.
+    ratingElement.title = '点击查看豆瓣详情'; // Tooltip for the link.
   }
 
-  // Apply platform-specific styles
+  // Apply platform-specific styles from the configuration (e.g., margins).
   const platformConfig = getCurrentPlatformConfig();
   if (platformConfig && platformConfig.ratingStyle) {
     Object.assign(ratingElement.style, platformConfig.ratingStyle);
   }
 
-  // Ensure parent element has position relative for absolute positioning to work
-  if (getComputedStyle(mediaElement).position === 'static') {
-    mediaElement.classList.add('media-container');
-  }
-
-  // Determine color based on rating value and thresholds
-  let ratingClass = 'low';
+  // Determine rating color and display string based on the rating value.
+  let ratingClass = 'low'; // Default to 'low' if rating is present but below medium.
   let ratingColor = lowRatingColor;
-  // Create a separate string for display
   let ratingStr;
 
   // Handle no rating case
@@ -850,7 +937,9 @@ function displayDoubanRating(ratingValue, url, mediaElement) {
   }
 
   // Create rating content
-  let ratingHtml = `
+  // Construct the inner HTML for the rating element.
+  // Uses CSS classes for styling different parts of the rating display.
+  const ratingHtml = `
     <div class="douban-score">
       <span class="douban-logo douban-logo-${ratingClass}" style="background-color: ${ratingColor}">豆</span>
       <span class="douban-value douban-value-${ratingClass}" style="color: ${ratingColor}">${ratingStr}</span>
@@ -858,5 +947,6 @@ function displayDoubanRating(ratingValue, url, mediaElement) {
   `;
 
   ratingElement.innerHTML = ratingHtml;
-  mediaElement.appendChild(ratingElement);
+  // Append the newly created rating element to the determined target.
+  ratingAppendTarget.appendChild(ratingElement);
 }
