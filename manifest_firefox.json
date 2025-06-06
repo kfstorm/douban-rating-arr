@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "豆瓣评分 for Radarr & Sonarr",
-  "version": "1.0",
+  "version": "1.0.1",
   "description": "在 Radarr 和 Sonarr 中显示电影与剧集的豆瓣评分",
   "browser_specific_settings": {
     "gecko": {
