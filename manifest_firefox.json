@@ -3,6 +3,11 @@
   "name": "豆瓣评分 for Radarr & Sonarr",
   "version": "1.0",
   "description": "在 Radarr 和 Sonarr 中显示电影与剧集的豆瓣评分",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "{f6731982-242f-4199-a861-308f86122f7b}"
+    }
+  },
   "icons": {
     "16": "images/icon16.png",
     "32": "images/icon32.png",
