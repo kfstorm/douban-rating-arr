@@ -26,28 +26,52 @@ document.addEventListener('DOMContentLoaded', function() {
     document.body.insertBefore(statusElement, document.querySelector('.button'));
     document.body.insertBefore(apiKeyStatus, document.querySelector('.button'));
 
-    // Add rating color legend
+    // Add rating color legend using safer DOM manipulation
     const legendElement = document.createElement('div');
     legendElement.className = 'rating-legend';
-    legendElement.innerHTML = `
-      <p><strong>评分颜色说明:</strong></p>
-      <div class="legend-item">
-        <span class="color-dot" style="background-color: ${data.goodRatingColor || DEFAULT_OPTIONS.goodRatingColor}"></span>
-        <span>好评 (≥ ${data.goodRatingThreshold || DEFAULT_OPTIONS.goodRatingThreshold})</span>
-      </div>
-      <div class="legend-item">
-        <span class="color-dot" style="background-color: ${data.mediumRatingColor || DEFAULT_OPTIONS.mediumRatingColor}"></span>
-        <span>中评 (≥ ${data.mediumRatingThreshold || DEFAULT_OPTIONS.mediumRatingThreshold})</span>
-      </div>
-      <div class="legend-item">
-        <span class="color-dot" style="background-color: ${data.lowRatingColor || DEFAULT_OPTIONS.lowRatingColor}"></span>
-        <span>低评 (< ${data.mediumRatingThreshold || DEFAULT_OPTIONS.mediumRatingThreshold})</span>
-      </div>
-      <div class="legend-item">
-        <span class="color-dot" style="background-color: ${data.noRatingColor || DEFAULT_OPTIONS.noRatingColor}"></span>
-        <span>暂无评分</span>
-      </div>
-    `;
+
+    // Create title paragraph
+    const titleP = document.createElement('p');
+    const titleStrong = document.createElement('strong');
+    titleStrong.textContent = '评分颜色说明:';
+    titleP.appendChild(titleStrong);
+    legendElement.appendChild(titleP);
+
+    // Helper function to create legend item
+    function createLegendItem(color, text) {
+      const itemDiv = document.createElement('div');
+      itemDiv.className = 'legend-item';
+
+      const colorDot = document.createElement('span');
+      colorDot.className = 'color-dot';
+      colorDot.style.backgroundColor = color;
+
+      const textSpan = document.createElement('span');
+      textSpan.textContent = text;
+
+      itemDiv.appendChild(colorDot);
+      itemDiv.appendChild(textSpan);
+
+      return itemDiv;
+    }
+
+    // Add legend items
+    legendElement.appendChild(createLegendItem(
+      data.goodRatingColor || DEFAULT_OPTIONS.goodRatingColor,
+      `好评 (≥ ${data.goodRatingThreshold || DEFAULT_OPTIONS.goodRatingThreshold})`
+    ));
+    legendElement.appendChild(createLegendItem(
+      data.mediumRatingColor || DEFAULT_OPTIONS.mediumRatingColor,
+      `中评 (≥ ${data.mediumRatingThreshold || DEFAULT_OPTIONS.mediumRatingThreshold})`
+    ));
+    legendElement.appendChild(createLegendItem(
+      data.lowRatingColor || DEFAULT_OPTIONS.lowRatingColor,
+      `低评 (< ${data.mediumRatingThreshold || DEFAULT_OPTIONS.mediumRatingThreshold})`
+    ));
+    legendElement.appendChild(createLegendItem(
+      data.noRatingColor || DEFAULT_OPTIONS.noRatingColor,
+      '暂无评分'
+    ));
     document.body.insertBefore(legendElement, document.querySelector('.button'));
   }).catch(function(error) {
     console.error('Error getting storage data:', error);
@@ -83,20 +107,47 @@ function displayArrStatus(response) {
       const appType = response.isRadarrPage ? 'Radarr' : 'Sonarr';
       const contentType = response.isRadarrPage ? '电影' : '剧集';
 
-      statusElement.innerHTML = `<p><strong>✅ 这是 ${appType} 页面</strong></p>`;
+      // Create main status message
+      const mainP = document.createElement('p');
+      const mainStrong = document.createElement('strong');
+      mainStrong.textContent = `✅ 这是 ${appType} 页面`;
+      mainP.appendChild(mainStrong);
+      statusElement.appendChild(mainP);
+
+      // Create API status message
+      const apiP = document.createElement('p');
       if (response.hasApiAccess) {
-        statusElement.innerHTML += '<p>✅ API 访问: 可用</p>';
-        statusElement.innerHTML += `<p>豆瓣评分将显示在${contentType}旁边。</p>`;
+        apiP.textContent = '✅ API 访问: 可用';
+        statusElement.appendChild(apiP);
+
+        const infoP = document.createElement('p');
+        infoP.textContent = `豆瓣评分将显示在${contentType}旁边。`;
+        statusElement.appendChild(infoP);
       } else {
-        statusElement.innerHTML += '<p>❌ API 访问: 不可用</p>';
+        apiP.textContent = '❌ API 访问: 不可用';
+        statusElement.appendChild(apiP);
       }
     } else {
-      statusElement.innerHTML = '<p><strong>❌ 这不是 Radarr 或 Sonarr 页面</strong></p>';
-      statusElement.innerHTML += '<p>豆瓣评分只会在 Radarr 和 Sonarr 页面上显示。</p>';
+      const mainP = document.createElement('p');
+      const mainStrong = document.createElement('strong');
+      mainStrong.textContent = '❌ 这不是 Radarr 或 Sonarr 页面';
+      mainP.appendChild(mainStrong);
+      statusElement.appendChild(mainP);
+
+      const infoP = document.createElement('p');
+      infoP.textContent = '豆瓣评分只会在 Radarr 和 Sonarr 页面上显示。';
+      statusElement.appendChild(infoP);
     }
   } else {
-    statusElement.innerHTML = '<p><strong>❓ 无法确定这是否为 Radarr 或 Sonarr 页面</strong></p>';
-    statusElement.innerHTML += '<p>扩展程序可能无法访问此页面。</p>';
+    const mainP = document.createElement('p');
+    const mainStrong = document.createElement('strong');
+    mainStrong.textContent = '❓ 无法确定这是否为 Radarr 或 Sonarr 页面';
+    mainP.appendChild(mainStrong);
+    statusElement.appendChild(mainP);
+
+    const infoP = document.createElement('p');
+    infoP.textContent = '扩展程序可能无法访问此页面。';
+    statusElement.appendChild(infoP);
   }
 
   // Insert the status at the top of the popup

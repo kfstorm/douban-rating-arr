@@ -954,17 +954,28 @@ function displayDoubanRating(ratingValue, url, mediaElement) {
     }
   }
 
-  // Create rating content
-  // Construct the inner HTML for the rating element.
-  // Uses CSS classes for styling different parts of the rating display.
-  const ratingHtml = `
-    <div class="douban-score">
-      <span class="douban-logo douban-logo-${ratingClass}" style="background-color: ${ratingColor}">豆</span>
-      <span class="douban-value douban-value-${ratingClass}" style="color: ${ratingColor}">${ratingStr}</span>
-    </div>
-  `;
+  // Create rating content using safer DOM manipulation
+  const scoreDiv = document.createElement('div');
+  scoreDiv.className = 'douban-score';
 
-  ratingElement.innerHTML = ratingHtml;
+  // Create logo span
+  const logoSpan = document.createElement('span');
+  logoSpan.className = `douban-logo douban-logo-${ratingClass}`;
+  logoSpan.style.backgroundColor = ratingColor;
+  logoSpan.textContent = '豆';
+
+  // Create value span
+  const valueSpan = document.createElement('span');
+  valueSpan.className = `douban-value douban-value-${ratingClass}`;
+  valueSpan.style.color = ratingColor;
+  valueSpan.textContent = ratingStr;
+
+  // Append spans to score div
+  scoreDiv.appendChild(logoSpan);
+  scoreDiv.appendChild(valueSpan);
+
+  // Append score div to rating element
+  ratingElement.appendChild(scoreDiv);
   // Append the newly created rating element to the determined target.
   ratingAppendTarget.appendChild(ratingElement);
 }
