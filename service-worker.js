@@ -3,7 +3,7 @@
 
 try {
   // Import other scripts
-  importScripts('defaults.js', 'background.js');
+  importScripts('browser-polyfill.js', 'defaults.js', 'background.js');
 } catch (e) {
   console.error('Error importing background scripts:', e);
 }

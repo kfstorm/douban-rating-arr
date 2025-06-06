@@ -1,0 +1,35 @@
+{
+  "manifest_version": 2,
+  "name": "豆瓣评分 for Radarr & Sonarr",
+  "version": "1.0",
+  "description": "在 Radarr 和 Sonarr 中显示电影与剧集的豆瓣评分",
+  "icons": {
+    "16": "images/icon16.png",
+    "32": "images/icon32.png",
+    "48": "images/icon48.png",
+    "128": "images/icon128.png"
+  },
+  "permissions": ["storage", "activeTab", "<all_urls>"],
+  "background": {
+    "scripts": ["browser-polyfill.js", "defaults.js", "background.js"],
+    "persistent": false
+  },
+  "browser_action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "images/icon16.png",
+      "32": "images/icon32.png",
+      "48": "images/icon48.png",
+      "128": "images/icon128.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["browser-polyfill.js", "defaults.js", "content.js"],
+      "css": ["styles.css"]
+    }
+  ],
+  "web_accessible_resources": ["api-access.js", "defaults.js", "react-props-access.js"],
+  "options_page": "options.html"
+}

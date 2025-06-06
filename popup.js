@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
   checkCurrentTab();
 
   // Get current status from storage
-  chrome.storage.sync.get([
+  browser.storage.sync.get([
     'doubanIdatabaseApiBaseUrl',
     'doubanIdatabaseApiKey',
     'goodRatingThreshold',
@@ -13,7 +13,10 @@ document.addEventListener('DOMContentLoaded', function() {
     'mediumRatingColor',
     'lowRatingColor',
     'noRatingColor'
-  ], function(data) {
+  ]).then(function(data) {
+    // Handle undefined data (Firefox compatibility)
+    data = data || {};
+
     const statusElement = document.createElement('p');
     statusElement.textContent = `API 网址: ${data.doubanIdatabaseApiBaseUrl || DEFAULT_OPTIONS.doubanIdatabaseApiBaseUrl}`;
 
@@ -46,21 +49,27 @@ document.addEventListener('DOMContentLoaded', function() {
       </div>
     `;
     document.body.insertBefore(legendElement, document.querySelector('.button'));
+  }).catch(function(error) {
+    console.error('Error getting storage data:', error);
   });
 });
 
 // Function to check if the current tab is a Radarr or Sonarr page
 function checkCurrentTab() {
-  chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+  browser.tabs.query({active: true, currentWindow: true}).then(function(tabs) {
     if (tabs[0]) {
-      chrome.tabs.sendMessage(
+      browser.tabs.sendMessage(
         tabs[0].id,
-        {action: "getArrStatus"},
-        function(response) {
-          displayArrStatus(response);
-        }
-      );
+        {action: "getArrStatus"}
+      ).then(function(response) {
+        displayArrStatus(response);
+      }).catch(function(error) {
+        console.error('Error sending message to tab:', error);
+        displayArrStatus(null);
+      });
     }
+  }).catch(function(error) {
+    console.error('Error querying tabs:', error);
   });
 }
 

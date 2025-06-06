@@ -24,17 +24,36 @@
 
 ## 安装方法
 
-目前此扩展尚未发布到 Chrome 网上应用商店，需要通过"开发者模式"以加载解压的扩展方式安装：
+1. 运行构建脚本生成浏览器特定的扩展包：
+
+   ```bash
+   ./build.sh
+   ```
+
+   **注意**：构建脚本需要在类 Unix 系统（macOS、Linux）或 Windows 的 WSL/Git Bash 环境中运行。
+
+2. 这将在 `build/` 目录下生成：
+   - `douban-rating-arr-chrome.zip` - Chrome 版本
+   - `douban-rating-arr-firefox.zip` - Firefox 版本
 
 ### Chrome / Edge / 其他基于 Chromium 的浏览器
 
-1. 下载此仓库的最新版本并解压到本地文件夹
-2. 打开浏览器，进入扩展管理页面
+1. 解压 `build/douban-rating-arr-chrome.zip` 到本地文件夹
+2. 打开浏览器扩展管理页面：
    - Chrome: 输入 `chrome://extensions/`
    - Edge: 输入 `edge://extensions/`
 3. 在右上角启用"开发者模式"
 4. 点击"加载已解压的扩展程序"
-5. 选择您解压的扩展文件夹
+5. 选择解压的 Chrome 版本文件夹
+6. 扩展图标将显示在浏览器工具栏中
+
+### Firefox
+
+1. 解压 `build/douban-rating-arr-firefox.zip` 到本地文件夹
+2. 打开 Firefox 浏览器，输入 `about:debugging`
+3. 点击左侧菜单中的"此 Firefox"
+4. 点击"载入临时附加组件"
+5. 导航到解压的文件夹并选择其中的 `manifest.json` 文件
 6. 扩展图标将显示在浏览器工具栏中
 
 扩展安装后即可使用，默认已配置好可用的豆瓣数据库 API，无需额外设置即可正常工作。
@@ -130,7 +149,9 @@
 
 ## 系统要求
 
-- 基于 Chromium 的现代浏览器（Chrome、Edge 等）
+- 现代浏览器：
+  - 基于 Chromium 的浏览器（Chrome、Edge 等）
+  - Mozilla Firefox
 - 正常运行的 Radarr 和/或 Sonarr 实例
 - 可访问的豆瓣数据库 API 服务
 

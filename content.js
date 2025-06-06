@@ -292,7 +292,7 @@ function injectApiScript() {
 
   // Use the extension's own script file instead of inline script
   const script = document.createElement('script');
-  script.src = chrome.runtime.getURL('api-access.js');
+  script.src = browser.runtime.getURL('api-access.js');
   (document.head || document.documentElement).appendChild(script);
 
   // Clean up after the script has loaded
@@ -366,7 +366,7 @@ window.addEventListener('message', function(event) {
 });
 
 // Add message listener to respond with page status
-chrome.runtime.onMessage.addListener(
+browser.runtime.onMessage.addListener(
   function(request, sender, sendResponse) {
     if (request.action === "getArrStatus") {
       sendResponse({
@@ -381,7 +381,7 @@ chrome.runtime.onMessage.addListener(
 );
 
 // First, get the API settings from storage
-chrome.storage.sync.get([
+browser.storage.sync.get([
   'doubanIdatabaseApiBaseUrl',
   'doubanIdatabaseApiKey',
   'goodRatingThreshold',
@@ -390,7 +390,10 @@ chrome.storage.sync.get([
   'mediumRatingColor',
   'lowRatingColor',
   'noRatingColor'
-], function(data) {
+]).then(function(data) {
+  // Handle undefined data (Firefox compatibility)
+  data = data || {};
+
   if (data.doubanIdatabaseApiBaseUrl) {
     doubanIdatabaseApiBaseUrl = data.doubanIdatabaseApiBaseUrl;
   }
@@ -425,6 +428,14 @@ chrome.storage.sync.get([
   }
 
   // Start processing once the DOM is fully loaded
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', processArrPage);
+  } else {
+    processArrPage();
+  }
+}).catch(function(error) {
+  console.error('Error getting storage data:', error);
+  // Continue with defaults if storage fails
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', processArrPage);
   } else {
@@ -601,7 +612,11 @@ function fetchMediaFromAPI() {
 
   const endpoint = isRadarrPage ? 'movie' : 'series';
 
-  fetch(`${arrApiRoot}/${endpoint}?apikey=${arrApiKey}`)
+  // Construct absolute URL for Firefox compatibility
+  const baseUrl = window.location.origin;
+  const apiUrl = `${baseUrl}${arrApiRoot}/${endpoint}?apikey=${arrApiKey}`;
+
+  fetch(apiUrl)
     .then(response => {
       if (!response.ok) {
         throw new Error(`API request failed for ${isRadarrPage ? 'Radarr' : 'Sonarr'}`);
@@ -614,6 +629,9 @@ function fetchMediaFromAPI() {
       lastMediaCacheTime = currentTime;
 
       processMediaFromAPI(media);
+    })
+    .catch(error => {
+      console.error('Error fetching media from API:', error);
     });
 }
 
@@ -738,7 +756,7 @@ function asyncFetchAndFillReactProps(element, propPath) {
 
     // Create a script element that points to our external script
     const script = document.createElement('script');
-    script.src = chrome.runtime.getURL('react-props-access.js');
+    script.src = browser.runtime.getURL('react-props-access.js');
 
     // Append the script to the document
     document.head.appendChild(script);

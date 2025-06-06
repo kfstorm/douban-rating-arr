@@ -9,7 +9,7 @@ function saveOptions() {
   const lowRatingColor = document.getElementById('lowRatingColor').value;
   const noRatingColor = document.getElementById('noRatingColor').value;
 
-  chrome.storage.sync.set({
+  browser.storage.sync.set({
     doubanIdatabaseApiBaseUrl: doubanIdatabaseApiBaseUrl || DEFAULT_OPTIONS.doubanIdatabaseApiBaseUrl,
     doubanIdatabaseApiKey: doubanIdatabaseApiKey,
     goodRatingThreshold: goodRatingThreshold,
@@ -18,11 +18,21 @@ function saveOptions() {
     mediumRatingColor: mediumRatingColor,
     lowRatingColor: lowRatingColor,
     noRatingColor: noRatingColor
-  }, function() {
+  }).then(function() {
     // Update status to let user know options were saved
     const status = document.getElementById('status');
     status.textContent = '设置已保存！';
     status.className = 'status success';
+    status.style.display = 'block';
+
+    setTimeout(function() {
+      status.style.display = 'none';
+    }, 3000);
+  }).catch(function(error) {
+    // Update status to let user know options save failed
+    const status = document.getElementById('status');
+    status.textContent = '保存设置时出错: ' + error.message;
+    status.className = 'status error';
     status.style.display = 'block';
 
     setTimeout(function() {
@@ -33,7 +43,10 @@ function saveOptions() {
 
 // Restore saved options when opening the options page
 function restoreOptions() {
-  chrome.storage.sync.get(DEFAULT_OPTIONS, function(items) {
+  browser.storage.sync.get(DEFAULT_OPTIONS).then(function(items) {
+    // Handle undefined items (Firefox compatibility)
+    items = items || DEFAULT_OPTIONS;
+
     document.getElementById('doubanIdatabaseApiBaseUrl').value = items.doubanIdatabaseApiBaseUrl;
     document.getElementById('doubanIdatabaseApiKey').value = items.doubanIdatabaseApiKey;
     document.getElementById('goodRatingThreshold').value = items.goodRatingThreshold;
@@ -45,6 +58,10 @@ function restoreOptions() {
 
     // Update color previews
     updateColorPreviews(items);
+  }).catch(function(error) {
+    console.error('Error restoring options:', error);
+    // Fallback to defaults if there's an error
+    updateColorPreviews(DEFAULT_OPTIONS);
   });
 }
 
