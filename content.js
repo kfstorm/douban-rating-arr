@@ -117,7 +117,7 @@ const arrPlatformConfig = {
       return posterContainer;
     },
 
-    // Extract TVDB ID from ThetvDB link
+    // Extract TVDB ID from TVDB link
     getMediaId: (container) => {
       const tvdbLink = Array.from(container.querySelectorAll('a')).find(
         link => link.href && link.href.startsWith('https://www.thetvdb.com/')
