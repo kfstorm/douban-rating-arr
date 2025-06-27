@@ -24,6 +24,16 @@
 
 ## 安装方法
 
+### 方式一：应用商店安装（推荐）
+
+[![Mozilla Add-on Version](https://img.shields.io/amo/v/douban-rating-arr?style=for-the-badge&logo=firefox%20browser&logoColor=white&label=Firefox)](https://addons.mozilla.org/en-US/firefox/addon/douban-rating-arr/)
+
+同时支持 Firefox 桌面版和 Firefox for Android
+
+### 方式二：手动构建安装
+
+如果您想要安装最新开发版本或用于其他浏览器，可以按以下步骤手动构建：
+
 1. 运行构建脚本生成浏览器特定的扩展包：
 
    ```bash
@@ -36,7 +46,7 @@
    - `douban-rating-arr-chrome.zip` - Chrome 版本
    - `douban-rating-arr-firefox.zip` - Firefox 版本
 
-### Chrome / Edge / 其他基于 Chromium 的浏览器
+#### Chrome / Edge / 其他基于 Chromium 的浏览器
 
 1. 解压 `build/douban-rating-arr-chrome.zip` 到本地文件夹
 2. 打开浏览器扩展管理页面：
@@ -47,11 +57,7 @@
 5. 选择解压的 Chrome 版本文件夹
 6. 扩展图标将显示在浏览器工具栏中
 
-### Firefox
-
-**推荐**：从 Firefox 附加组件商店安装：[https://addons.mozilla.org/en-US/firefox/addon/douban-rating-arr/](https://addons.mozilla.org/en-US/firefox/addon/douban-rating-arr/)
-
-或者手动安装开发版本：
+#### Firefox（手动安装开发版本）
 
 1. 解压 `build/douban-rating-arr-firefox.zip` 到本地文件夹
 2. 打开 Firefox 浏览器，输入 `about:debugging`
@@ -59,6 +65,8 @@
 4. 点击"载入临时附加组件"
 5. 导航到解压的文件夹并选择其中的 `manifest.json` 文件
 6. 扩展图标将显示在浏览器工具栏中
+
+---
 
 扩展安装后即可使用，默认已配置好可用的豆瓣数据库 API，无需额外设置即可正常工作。
 
