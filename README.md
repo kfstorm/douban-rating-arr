@@ -49,6 +49,10 @@
 
 ### Firefox
 
+**推荐**：从 Firefox 附加组件商店安装：[https://addons.mozilla.org/en-US/firefox/addon/douban-rating-arr/](https://addons.mozilla.org/en-US/firefox/addon/douban-rating-arr/)
+
+或者手动安装开发版本：
+
 1. 解压 `build/douban-rating-arr-firefox.zip` 到本地文件夹
 2. 打开 Firefox 浏览器，输入 `about:debugging`
 3. 点击左侧菜单中的"此 Firefox"
