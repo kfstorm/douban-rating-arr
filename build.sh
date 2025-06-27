@@ -17,8 +17,12 @@ for browser in "${browsers[@]}"; do
     echo "Building $browser version..."
     mkdir -p "build/$browser"
 
-    # Copy all files and images directory in one command
-    cp -r *.js *.html *.css *.md LICENSE "manifest_$browser.json" images "build/$browser/"
+    # Copy all files and create images directory
+    cp -r *.js *.html *.css *.md LICENSE "manifest_$browser.json" "build/$browser/"
+    mkdir -p "build/$browser/images"
+
+    # Copy only icon PNG files from images directory
+    cp images/icon*.png "build/$browser/images/"
 
     # Replace browser-specific manifest with manifest.json
     mv "build/$browser/manifest_$browser.json" "build/$browser/manifest.json"
