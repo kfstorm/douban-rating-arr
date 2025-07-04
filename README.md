@@ -26,9 +26,10 @@
 
 ### 方式一：应用商店安装（推荐）
 
-[![Mozilla Add-on Version](https://img.shields.io/amo/v/douban-rating-arr?style=for-the-badge&logo=firefox%20browser&logoColor=white&label=Firefox)](https://addons.mozilla.org/en-US/firefox/addon/douban-rating-arr/)
+[![Chrome Web Store Version](https://img.shields.io/chrome-web-store/v/mbjdgljhmaehnebnfoolinphhcmphife?style=for-the-badge&logo=googlechrome&logoColor=white&label=Chrome)](https://chromewebstore.google.com/detail/%E8%B1%86%E7%93%A3%E8%AF%84%E5%88%86-for-radarr-sonarr/mbjdgljhmaehnebnfoolinphhcmphife) [![Mozilla Add-on Version](https://img.shields.io/amo/v/douban-rating-arr?style=for-the-badge&logo=firefox%20browser&logoColor=white&label=Firefox)](https://addons.mozilla.org/en-US/firefox/addon/douban-rating-arr/)
 
-同时支持 Firefox 桌面版和 Firefox for Android
+> [!TIP]
+> Firefox版本也支持安卓端
 
 ### 方式二：手动构建安装
 
