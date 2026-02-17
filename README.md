@@ -125,25 +125,7 @@
 
 ### 自建豆瓣数据库 API 要求
 
-扩展已预配置默认的豆瓣数据库 API 服务，无需额外设置。如果您出于隐私考虑或需要更高查询速度，可以自行开发或使用第三方提供的豆瓣数据库 API 服务，只要其符合下面的接口要求即可。
-
-豆瓣数据库 API 需要提供以下功能：
-
-- 支持多种 ID 类型作为输入参数：
-  - IMDb ID：`/api/item?imdb_id=tt0111161`
-  - TMDB ID 与媒体类型：`/api/item?tmdb_id=278&tmdb_media_type=movie`
-  - TVDB ID：`/api/item?tvdb_id=81189`
-
-- 返回包含以下信息的 JSON 格式数据：
-
-  ```json
-  [
-    {
-      "douban_id": "1292052",
-      "rating": 9.7
-    }
-  ]
-  ```
+扩展已预配置默认的豆瓣数据库 API 服务，无需额外设置。如果您出于隐私考虑或需要更高查询速度，可以自行部署 [douban-idatabase](https://github.com/kfstorm/douban-idatabase) 项目，接口规范请参考：[API Usage](https://github.com/kfstorm/douban-idatabase#api-usage)。
 
 ## 故障排除
 
